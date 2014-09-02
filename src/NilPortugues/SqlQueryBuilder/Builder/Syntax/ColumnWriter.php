@@ -60,10 +60,11 @@ class ColumnWriter
         if (!empty($selectAsColumns)) {
 
             $selectWriter = WriterFactory::createSelectWriter($this->writer, $this->placeholderWriter);
+            $myWriter = $this->writer;
 
             array_walk(
                 $selectAsColumns,
-                function (&$column) use (&$selectWriter) {
+                function (&$column) use (&$selectWriter, $myWriter) {
                     $key = array_keys($column);
                     $key = array_pop($key);
 
@@ -71,7 +72,7 @@ class ColumnWriter
                     $value  = $values[0];
 
                     if (is_numeric($key)) {
-                        $key = $this->writer->writeTableName($value->getTable());
+                        $key = $myWriter->writeTableName($value->getTable());
                     }
 
                     $column = $selectWriter->selectToColumn($key, $value);

@@ -115,11 +115,12 @@ class SelectWriter
             $funcAsColumns   = $this->columnWriter->writeFuncAsColumns($select);
 
             $columns = array_merge($tableColumns, $selectAsColumns, $valueAsColumns, $funcAsColumns);
+            $columnWriter = $this->columnWriter;
 
             array_walk(
                 $columns,
-                function (&$column) {
-                    $column = $this->columnWriter->writeColumnWithAlias($column);
+                function (&$column) use ($columnWriter) {
+                    $column = $columnWriter->writeColumnWithAlias($column);
                 }
             );
 
@@ -154,13 +155,14 @@ class SelectWriter
     {
         $str   = "";
         $joins = $select->getAllJoins();
+        $myWriter = $this->writer;
 
         if (!empty($joins)) {
 
             array_walk(
                 $joins,
-                function (&$join) {
-                    $join = $this->writer->writeJoin($join);
+                function (&$join) use ($myWriter) {
+                    $join = $myWriter->writeJoin($join);
                 }
             );
 
@@ -224,11 +226,12 @@ class SelectWriter
         if (count($select->getGroupBy())) {
 
             $groupCols = $select->getGroupBy();
+            $myColumnWriter = $this->columnWriter;
 
             array_walk(
                 $groupCols,
-                function (&$column) {
-                    $column = $this->columnWriter->writeColumn($column);
+                function (&$column) use ($myColumnWriter) {
+                    $column = $myColumnWriter->writeColumn($column);
                 }
             );
 
@@ -259,7 +262,7 @@ class SelectWriter
 
                     $whereWriter = WriterFactory::createWhereWriter($writer, $placeholder);
                     $clauses     = $whereWriter->writeWhereClauses($having);
-                    $having      = implode($this->writer->writeConjunction($select->getHavingOperator()), $clauses);
+                    $having      = implode($writer->writeConjunction($select->getHavingOperator()), $clauses);
                 }
             );
 
@@ -285,9 +288,7 @@ class SelectWriter
             $orderByArray = $select->getAllOrderBy();
             array_walk(
                 $orderByArray,
-                function (&$orderBy) {
-                    $orderBy = $this->writeOrderBy($orderBy);
-                }
+                array($this, 'writeEachOrderBy')
             );
 
             $str = "ORDER BY ";
@@ -295,6 +296,14 @@ class SelectWriter
         }
 
         return $str;
+    }
+
+    /**
+     * @param OrderBy &$orderBy
+     */
+    private function writeEachOrderBy(OrderBy &$orderBy)
+    {
+        $orderBy = $this->writeOrderBy($orderBy);
     }
 
     /**

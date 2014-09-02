@@ -69,9 +69,10 @@ abstract class BaseQuery implements Query, QueryPart
     }
 
     /**
+     * This is actually redundant from the QueryPart interface
      * @return string
      */
-    abstract public function partName();
+    // abstract public function partName();
 
     /**
      * @return Where

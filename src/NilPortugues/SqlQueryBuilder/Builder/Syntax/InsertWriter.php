@@ -50,17 +50,20 @@ class InsertWriter
             throw new QueryException('No columns were defined for the current schema.');
         }
 
+        $myColumnWriter = $this->columnWriter;
+        $myWriter = $this->writer;
+
         array_walk(
             $columns,
-            function (&$column) {
-                $column = $this->columnWriter->writeColumn($column);
+            function (&$column) use ($myColumnWriter) {
+                $column = $myColumnWriter->writeColumn($column);
             }
         );
 
         array_walk(
             $values,
-            function (&$value) {
-                $value = $this->writer->writePlaceholderValue($value);
+            function (&$value) use ($myWriter) {
+                $value = $myWriter->writePlaceholderValue($value);
             }
         );
 

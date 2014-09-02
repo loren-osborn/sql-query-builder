@@ -69,11 +69,12 @@ class WhereWriter
         $isNotNulls  = $this->writeWhereIsNotNulls($where);
         $booleans    = $this->writeWhereBooleans($where);
         $subWheres   = $where->getSubWheres();
+        $self        = $this;
 
         array_walk(
             $subWheres,
-            function (&$subWhere) {
-                $subWhere = "({$this->writeWhere($subWhere)})";
+            function (&$subWhere) use ($self) {
+                $subWhere = "({$self->writeWhere($subWhere)})";
             }
         );
 
@@ -189,16 +190,18 @@ class WhereWriter
     protected function writeWhereBetweens(Where $where)
     {
         $between = $where->getBetweens();
+        $myColumnWriter = $this->columnWriter;
+        $myWriter = $this->writer;
         array_walk(
             $between,
-            function (&$between) {
+            function (&$between) use ($myColumnWriter, $myWriter) {
 
                 $between = "("
-                    . $this->columnWriter->writeColumn($between["subject"])
+                    . $myColumnWriter->writeColumn($between["subject"])
                     . " BETWEEN "
-                    . $this->writer->writePlaceholderValue($between["a"])
+                    . $myWriter->writePlaceholderValue($between["a"])
                     . " AND "
-                    . $this->writer->writePlaceholderValue($between["b"])
+                    . $myWriter->writePlaceholderValue($between["b"])
                     . ")";
             }
         );
@@ -216,17 +219,22 @@ class WhereWriter
         $comparisons = $where->getComparisons();
         array_walk(
             $comparisons,
-            function (&$comparison) {
-
-                $str = $this->writeWherePartialCondition($comparison["subject"]);
-                $str .= $this->writer->writeConjunction($comparison["conjunction"]);
-                $str .= $this->writeWherePartialCondition($comparison["target"]);
-
-                $comparison = "($str)";
-            }
+            array($this, 'writeWhereComparisonItem')
         );
 
         return $comparisons;
+    }
+
+    /**
+     * @param array &$comparison
+     */
+    private function writeWhereComparisonItem(&$comparison)
+    {
+        $str = $this->writeWherePartialCondition($comparison["subject"]);
+        $str .= $this->writer->writeConjunction($comparison["conjunction"]);
+        $str .= $this->writeWherePartialCondition($comparison["target"]);
+
+        $comparison = "($str)";
     }
 
     /**
@@ -260,13 +268,15 @@ class WhereWriter
     protected function writeWhereIsNulls(Where $where)
     {
         $isNulls = $where->getNull();
+        $myColumnWriter = $this->columnWriter;
+        $myWriter = $this->writer;
 
         array_walk(
             $isNulls,
-            function (&$isNull) {
+            function (&$isNull) use ($myColumnWriter, $myWriter) {
                 $isNull = "("
-                    . $this->columnWriter->writeColumn($isNull["subject"])
-                    . $this->writer->writeIsNull()
+                    . $myColumnWriter->writeColumn($isNull["subject"])
+                    . $myWriter->writeIsNull()
                     . ")";
             }
         );
@@ -281,14 +291,16 @@ class WhereWriter
      */
     protected function writeWhereIsNotNulls(Where $where)
     {
-        $isNotNulls = $where->getNotNull();
+        $isNotNulls     = $where->getNotNull();
+        $myColumnWriter = $this->columnWriter;
+        $myWriter       = $this->writer;
 
         array_walk(
             $isNotNulls,
-            function (&$isNotNull) {
+            function (&$isNotNull) use ($myColumnWriter, $myWriter) {
                 $isNotNull =
-                    "(" . $this->columnWriter->writeColumn($isNotNull["subject"])
-                    . $this->writer->writeIsNotNull() . ")";
+                    "(" . $myColumnWriter->writeColumn($isNotNull["subject"])
+                    . $myWriter->writeIsNotNull() . ")";
             }
         );
 
@@ -304,12 +316,13 @@ class WhereWriter
     {
         $booleans          = $where->getBooleans();
         $placeholderWriter = $this->placeholderWriter;
+        $myColumnWriter    = $this->columnWriter;
 
         array_walk(
             $booleans,
-            function (&$boolean) use (&$placeholderWriter) {
-                $column = $this->columnWriter->writeColumn($boolean["subject"]);
-                $value  = $this->placeholderWriter->add($boolean["value"]);
+            function (&$boolean) use (&$placeholderWriter, &$myColumnWriter) {
+                $column = $myColumnWriter->writeColumn($boolean["subject"]);
+                $value  = $placeholderWriter->add($boolean["value"]);
 
                 $boolean = "(ISNULL(" . $column . ", 0) = " . $value . ")";
             }

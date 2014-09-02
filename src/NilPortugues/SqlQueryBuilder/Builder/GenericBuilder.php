@@ -237,12 +237,18 @@ class GenericBuilder implements Builder
     {
         array_walk(
             $values,
-            function (&$value) {
-                $value = $this->writePlaceholderValue($value);
-            }
+            array($this, 'writeEachPlaceholderValue')
         );
 
         return $values;
+    }
+
+    /**
+     * @param $value
+     */
+    private function writeEachPlaceholderValue(&$value)
+    {
+        $value = $this->writePlaceholderValue($value);
     }
 
     /**
