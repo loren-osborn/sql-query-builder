@@ -19,6 +19,11 @@
             "":"src/"
         }
     },
+    "autoload-dev":{
+        "psr-4":{
+            "":"src/"
+        }
+    },
     "repositories":
     [
         {
@@ -38,14 +43,15 @@
         "phpunit/phpunit-mock-objects": "2.2.*@dev",
         "phpunit/php-code-coverage": "2.0.x-dev",
         "sebastian/comparator": "dev-master",
-         "sebastian/diff": "1.1.0 as 1.0.0",
+        "sebastian/diff": "1.1.0 as 1.0.0",
         "sebastian/finder-facade": "dev-master",
         "theseer/fdomdocument": "dev-master",
         "fabpot/php-cs-fixer": ">=0.2",
         "pdepend/pdepend": "2.*",
         "phpmd/phpmd": "dev-master",
         "goatherd/phpcs_installer": "2.*@dev",
-        "squizlabs/php_codesniffer": "2.*@dev"
+        "squizlabs/php_codesniffer": "2.*@dev",
+        "nikic/php-parser": "1.0.*@dev"
     },
     "config":
     {
