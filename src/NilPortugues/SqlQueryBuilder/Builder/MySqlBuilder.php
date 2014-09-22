@@ -53,9 +53,21 @@ class MySqlBuilder extends GenericBuilder
      *
      * @return string
      */
-    public function writeAlias($alias)
+    public function writeTableAlias($alias)
     {
-        return $this->wrapper(parent::writeAlias($alias));
+        return $this->wrapper(parent::writeTableAlias($alias));
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param $alias
+     *
+     * @return string
+     */
+    public function writeColumnAlias($alias)
+    {
+        return $this->wrapper($alias);
     }
 
     /**
@@ -66,6 +78,6 @@ class MySqlBuilder extends GenericBuilder
      */
     protected function wrapper($string, $char = '`')
     {
-        return $char . $string . $char;
+        return $char.$string.$char;
     }
 }

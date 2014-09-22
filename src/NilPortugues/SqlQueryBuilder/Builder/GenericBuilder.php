@@ -10,7 +10,7 @@
 namespace NilPortugues\SqlQueryBuilder\Builder;
 
 use NilPortugues\SqlQueryBuilder\Builder\Syntax\WriterFactory;
-use NilPortugues\SqlQueryBuilder\Manipulation\Query;
+use NilPortugues\SqlQueryBuilder\Manipulation\QueryInterface;
 use NilPortugues\SqlQueryBuilder\Manipulation\QueryFactory;
 use NilPortugues\SqlQueryBuilder\Manipulation\Select;
 use NilPortugues\SqlQueryBuilder\Syntax\Column;
@@ -19,9 +19,9 @@ use NilPortugues\SqlQueryFormatter\Formatter;
 
 /**
  * Class Generic
- * @package NilPortugues\SqlQueryBuilder\Builder
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface
  */
-class GenericBuilder implements Builder
+class GenericBuilder implements BuilderInterface
 {
     /**
      * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\PlaceholderWriter
@@ -49,14 +49,29 @@ class GenericBuilder implements Builder
     private $updateWriter;
 
     /**
-     * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\ColumnWriter
-     */
-    private $columnWriter;
-
-    /**
      * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\WhereWriter
      */
     private $whereWriter;
+
+    /**
+     * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\IntersectWriter
+     */
+    private $intersectWriter;
+
+    /**
+     * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\MinusWriter
+     */
+    private $minusWriter;
+
+    /**
+     * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\UnionWriter
+     */
+    private $unionWriter;
+
+    /**
+     * @var \NilPortugues\SqlQueryBuilder\Builder\Syntax\UnionAllWriter
+     */
+    private $unionAllWriter;
 
     /**
      * @var \NilPortugues\SqlQueryFormatter\Formatter
@@ -74,8 +89,11 @@ class GenericBuilder implements Builder
         $this->updateWriter = WriterFactory::createUpdateWriter($this, $this->placeholderWriter);
         $this->deleteWriter = WriterFactory::createDeleteWriter($this, $this->placeholderWriter);
         $this->insertWriter = WriterFactory::createInsertWriter($this, $this->placeholderWriter);
-        $this->columnWriter = WriterFactory::createColumnWriter($this, $this->placeholderWriter);
         $this->whereWriter  = WriterFactory::createWhereWriter($this, $this->placeholderWriter);
+        $this->intersectWriter = WriterFactory::createIntersectWriter($this);
+        $this->minusWriter = WriterFactory::createMinusWriter($this);
+        $this->unionWriter = WriterFactory::createUnionWriter($this);
+        $this->unionAllWriter = WriterFactory::createUnionAllWriter($this);
 
         $this->sqlFormatter = new Formatter();
     }
@@ -113,6 +131,41 @@ class GenericBuilder implements Builder
     }
 
     /**
+     * @return \NilPortugues\SqlQueryBuilder\Manipulation\Intersect
+     */
+    public function intersect()
+    {
+        return QueryFactory::createIntersect();
+    }
+
+    /**
+     * @return \NilPortugues\SqlQueryBuilder\Manipulation\Union
+     */
+    public function union()
+    {
+        return QueryFactory::createUnion();
+    }
+
+    /**
+     * @return \NilPortugues\SqlQueryBuilder\Manipulation\UnionAll
+     */
+    public function unionAll()
+    {
+        return QueryFactory::createUnionAll();
+    }
+
+    /**
+     * @param \NilPortugues\SqlQueryBuilder\Manipulation\Select $first
+     * @param \NilPortugues\SqlQueryBuilder\Manipulation\Select $second
+     *
+     * @return \NilPortugues\SqlQueryBuilder\Manipulation\Minus
+     */
+    public function minus(Select $first, Select $second)
+    {
+        return QueryFactory::createMinus($first, $second);
+    }
+
+    /**
      * @return array
      */
     public function getValues()
@@ -121,13 +174,17 @@ class GenericBuilder implements Builder
     }
 
     /**
-     * @param Query $query
+     * @param QueryInterface $query
+     * @param bool           $resetPlaceholders
      *
      * @return string
      */
-    public function write(Query $query)
+    public function write(QueryInterface $query, $resetPlaceholders = true)
     {
-        $this->placeholderWriter->reset();
+        if ($resetPlaceholders) {
+            $this->placeholderWriter->reset();
+        }
+
         $sql = '';
 
         switch ($query->partName()) {
@@ -147,6 +204,22 @@ class GenericBuilder implements Builder
             case 'DELETE':
                 $sql = $this->deleteWriter->writeDelete($query);
                 break;
+
+            case 'INTERSECT':
+                $sql = $this->intersectWriter->writeIntersect($query);
+                break;
+
+            case 'MINUS':
+                $sql = $this->minusWriter->writeMinus($query);
+                break;
+
+            case 'UNION':
+                $sql = $this->unionWriter->writeUnion($query);
+                break;
+
+            case 'UNION ALL':
+                $sql = $this->unionAllWriter->writeUnionAll($query);
+                break;
         }
 
         return $sql;
@@ -155,11 +228,11 @@ class GenericBuilder implements Builder
     /**
      * Returns a SQL string in a readable human-friendly format.
      *
-     * @param Query $query
+     * @param QueryInterface $query
      *
      * @return string
      */
-    public function writeFormatted(Query $query)
+    public function writeFormatted(QueryInterface $query)
     {
         return $this->sqlFormatter->format($this->write($query));
     }
@@ -175,7 +248,7 @@ class GenericBuilder implements Builder
         $sql .= "JOIN ";
         $sql .= $this->writeTableWithAlias($select->getTable());
         $sql .= " ON ";
-        $sql .= $this->whereWriter->writeWhere($select->getJoinCondition(), 1);
+        $sql .= $this->whereWriter->writeWhere($select->getJoinCondition());
 
         return $sql;
     }
@@ -187,10 +260,10 @@ class GenericBuilder implements Builder
      */
     public function writeTableWithAlias(Table $table)
     {
-        $alias  = ($table->getAlias()) ? " AS {$this->writeAlias($table->getAlias())}" : '';
+        $alias  = ($table->getAlias()) ? " AS {$this->writeTableAlias($table->getAlias())}" : '';
         $schema = ($table->getSchema()) ? "{$table->getSchema()}." : '';
 
-        return $schema . $this->writeTableName($table) . $alias;
+        return $schema.$this->writeTableName($table).$alias;
     }
 
     /**
@@ -198,9 +271,19 @@ class GenericBuilder implements Builder
      *
      * @return mixed
      */
-    public function writeAlias($alias)
+    public function writeTableAlias($alias)
     {
         return $alias;
+    }
+
+    /**
+     * @param string $alias
+     *
+     * @return string
+     */
+    public function writeColumnAlias($alias)
+    {
+        return "'{$alias}'";
     }
 
     /**
@@ -225,7 +308,7 @@ class GenericBuilder implements Builder
     {
         $schema = ($table->getSchema()) ? "{$table->getSchema()}." : '';
 
-        return $schema . $this->writeTableName($table);
+        return $schema.$this->writeTableName($table);
     }
 
     /**
@@ -268,7 +351,7 @@ class GenericBuilder implements Builder
      */
     public function writeConjunction($operator)
     {
-        return ' ' . $operator . ' ';
+        return ' '.$operator.' ';
     }
 
     /**

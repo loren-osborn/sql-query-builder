@@ -10,7 +10,7 @@ use NilPortugues\SqlQueryBuilder\Syntax\Where;
 
 /**
  * Class WhereWriter
- * @package NilPortugues\SqlQueryBuilder\Builder\Syntax
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface\Syntax
  */
 class WhereWriter
 {
@@ -23,6 +23,11 @@ class WhereWriter
      * @var PlaceholderWriter
      */
     private $placeholderWriter;
+
+    /**
+     * @var ColumnWriter
+     */
+    private $columnWriter;
 
     /**
      * @param GenericBuilder    $writer
@@ -68,6 +73,8 @@ class WhereWriter
         $isNulls     = $this->writeWhereIsNulls($where);
         $isNotNulls  = $this->writeWhereIsNotNulls($where);
         $booleans    = $this->writeWhereBooleans($where);
+        $exists      = $this->writeExists($where);
+        $notExists      = $this->writeNotExists($where);
         $subWheres   = $where->getSubWheres();
         $self        = $this;
 
@@ -87,6 +94,8 @@ class WhereWriter
             $isNulls,
             $isNotNulls,
             $booleans,
+            $exists,
+            $notExists,
             $subWheres
         );
 
@@ -197,12 +206,12 @@ class WhereWriter
             function (&$between) use ($myColumnWriter, $myWriter) {
 
                 $between = "("
-                    . $myColumnWriter->writeColumn($between["subject"])
-                    . " BETWEEN "
-                    . $myWriter->writePlaceholderValue($between["a"])
-                    . " AND "
-                    . $myWriter->writePlaceholderValue($between["b"])
-                    . ")";
+                    .$myColumnWriter->writeColumn($between["subject"])
+                    ." BETWEEN "
+                    .$myWriter->writePlaceholderValue($between["a"])
+                    ." AND "
+                    .$myWriter->writePlaceholderValue($between["b"])
+                    .")";
             }
         );
 
@@ -250,7 +259,7 @@ class WhereWriter
         } elseif ($subject instanceof Select) {
 
             $selectWriter = WriterFactory::createSelectWriter($this->writer, $this->placeholderWriter);
-            $str          = '(' . $selectWriter->writeSelect($subject) . ')';
+            $str          = '('.$selectWriter->writeSelect($subject).')';
 
         } else {
             $str = $this->writer->writePlaceholderValue($subject);
@@ -275,9 +284,9 @@ class WhereWriter
             $isNulls,
             function (&$isNull) use ($myColumnWriter, $myWriter) {
                 $isNull = "("
-                    . $myColumnWriter->writeColumn($isNull["subject"])
-                    . $myWriter->writeIsNull()
-                    . ")";
+                    .$myColumnWriter->writeColumn($isNull["subject"])
+                    .$myWriter->writeIsNull()
+                    .")";
             }
         );
 
@@ -299,8 +308,8 @@ class WhereWriter
             $isNotNulls,
             function (&$isNotNull) use ($myColumnWriter, $myWriter) {
                 $isNotNull =
-                    "(" . $myColumnWriter->writeColumn($isNotNull["subject"])
-                    . $myWriter->writeIsNotNull() . ")";
+                    "(".$myColumnWriter->writeColumn($isNotNull["subject"])
+                    .$myWriter->writeIsNotNull().")";
             }
         );
 
@@ -324,10 +333,42 @@ class WhereWriter
                 $column = $myColumnWriter->writeColumn($boolean["subject"]);
                 $value  = $placeholderWriter->add($boolean["value"]);
 
-                $boolean = "(ISNULL(" . $column . ", 0) = " . $value . ")";
+                $boolean = "(ISNULL(".$column.", 0) = ".$value.")";
             }
         );
 
         return $booleans;
+    }
+
+    /**
+     * @param Where $where
+     *
+     * @return array
+     */
+    private function writeExists(Where $where)
+    {
+        $exists = array();
+
+        foreach ($where->getExists() as $select) {
+            $exists[] = "EXISTS (".$this->writer->write($select, false).")";
+        }
+
+        return $exists;
+    }
+
+    /**
+     * @param Where $where
+     *
+     * @return array
+     */
+    private function writeNotExists(Where $where)
+    {
+        $exists = array();
+
+        foreach ($where->getNotExists() as $select) {
+            $exists[] = "NOT EXISTS (".$this->writer->write($select, false).")";
+        }
+
+        return $exists;
     }
 }

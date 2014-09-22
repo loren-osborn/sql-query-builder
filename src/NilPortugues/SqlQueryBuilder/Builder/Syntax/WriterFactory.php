@@ -14,7 +14,7 @@ use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
 
 /**
  * Class WriterFactory
- * @package NilPortugues\SqlQueryBuilder\Builder\Syntax
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface\Syntax
  */
 final class WriterFactory
 {
@@ -90,5 +90,45 @@ final class WriterFactory
     public static function createPlaceholderWriter()
     {
         return new PlaceholderWriter();
+    }
+
+    /**
+     * @param GenericBuilder $writer
+     *
+     * @return IntersectWriter
+     */
+    public static function createIntersectWriter(GenericBuilder $writer)
+    {
+        return new IntersectWriter($writer);
+    }
+
+    /**
+     * @param GenericBuilder $writer
+     *
+     * @return MinusWriter
+     */
+    public static function createMinusWriter(GenericBuilder $writer)
+    {
+        return new MinusWriter($writer);
+    }
+
+    /**
+     * @param GenericBuilder $writer
+     *
+     * @return UnionWriter
+     */
+    public static function createUnionWriter(GenericBuilder $writer)
+    {
+        return new UnionWriter($writer);
+    }
+
+    /**
+     * @param GenericBuilder $writer
+     *
+     * @return UnionAllWriter
+     */
+    public static function createUnionAllWriter(GenericBuilder $writer)
+    {
+        return new UnionAllWriter($writer);
     }
 }

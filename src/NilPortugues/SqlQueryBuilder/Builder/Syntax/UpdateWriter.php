@@ -16,7 +16,7 @@ use NilPortugues\SqlQueryBuilder\Syntax\SyntaxFactory;
 
 /**
  * Class UpdateWriter
- * @package NilPortugues\SqlQueryBuilder\Builder\Syntax
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface\Syntax
  */
 class UpdateWriter
 {
@@ -29,6 +29,11 @@ class UpdateWriter
      * @var PlaceholderWriter
      */
     private $placeholderWriter;
+
+    /**
+     * @var ColumnWriter
+     */
+    private $columnWriter;
 
     /**
      * @param GenericBuilder    $writer
@@ -57,8 +62,8 @@ class UpdateWriter
 
         $parts = array
         (
-            "UPDATE " . $this->writer->writeTable($update->getTable()) . " SET ",
-            $this->writeUpdateValues($update)
+            "UPDATE ".$this->writer->writeTable($update->getTable())." SET ",
+            $this->writeUpdateValues($update),
         );
 
         if (!is_null($update->getWhere())) {

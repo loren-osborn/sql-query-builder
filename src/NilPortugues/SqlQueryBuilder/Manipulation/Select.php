@@ -101,8 +101,8 @@ class Select extends BaseQuery
     protected $columnFuncs = array();
 
     /**
-     * @param string  $table
-     * @param array $columns
+     * @param string $table
+     * @param array  $columns
      */
     public function __construct($table = null, $columns = array(Column::ALL))
     {
@@ -148,11 +148,11 @@ class Select extends BaseQuery
     }
 
     /**
-     * @param       $table
-     * @param null  $selfColumn
-     * @param null  $refColumn
-     * @param array $columns
-     * @param string  $joinType
+     * @param        $table
+     * @param null   $selfColumn
+     * @param null   $refColumn
+     * @param array  $columns
+     * @param string $joinType
      *
      * @return Select
      */
@@ -355,8 +355,8 @@ class Select extends BaseQuery
     /**
      * Allows setting a value to the select statement.
      *
-     * @param $value
-     * @param $alias
+     * @param string $value
+     * @param string $alias
      *
      * @return $this
      */
@@ -378,9 +378,9 @@ class Select extends BaseQuery
     /**
      * Allows calculation on columns using predefined SQL functions.
      *
-     * @param       $funcName
-     * @param array $arguments
-     * @param       $alias
+     * @param       string $funcName
+     * @param string[] $arguments
+     * @param       string $alias
      *
      * @return $this
      */
@@ -400,7 +400,7 @@ class Select extends BaseQuery
     }
 
     /**
-     * Returns all the Where conditions to the Builder class in order to write the SQL WHERE statement.
+     * Returns all the Where conditions to the BuilderInterface class in order to write the SQL WHERE statement.
      *
      * @return array
      */
@@ -418,7 +418,6 @@ class Select extends BaseQuery
 
         return $wheres;
     }
-
 
     /**
      * @return array
@@ -440,11 +439,22 @@ class Select extends BaseQuery
     }
 
     /**
+     * @param string $columnName
+     * @param string $alias
+     *
      * @return $this
      */
-    public function count()
+    public function count($columnName = '*', $alias = '')
     {
-        $this->columns = array('COUNT(*)');
+        $count = 'COUNT(';
+        $count .= ($columnName !== '*') ? "$this->table.{$columnName}" : '*';
+        $count .=')';
+
+        if (isset($alias) && strlen($alias)>0) {
+            $count .= " AS '{$alias}'";
+        }
+
+        $this->columns = array($count);
         $this->isCount = true;
 
         return $this;
@@ -457,7 +467,6 @@ class Select extends BaseQuery
     {
         return $this->isCount;
     }
-
 
     /**
      * @param integer $start
@@ -515,7 +524,6 @@ class Select extends BaseQuery
         return $this->joinCondition;
     }
 
-
     /**
      * @return string
      */
@@ -525,7 +533,7 @@ class Select extends BaseQuery
     }
 
     /**
-     * @param $joinType
+     * @param string|null $joinType
      *
      * @return $this
      */
@@ -550,7 +558,7 @@ class Select extends BaseQuery
 
         if (!in_array($havingOperator, array(Where::CONJUNCTION_AND, Where::CONJUNCTION_OR))) {
             throw new QueryException(
-                "Invalid conjunction specified, must be one of AND or OR, but '" . $havingOperator . "' was found."
+                "Invalid conjunction specified, must be one of AND or OR, but '".$havingOperator."' was found."
             );
         }
 
@@ -566,7 +574,6 @@ class Select extends BaseQuery
     {
         return $this->havingOperator;
     }
-
 
     /**
      * @return $this

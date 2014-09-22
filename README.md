@@ -1,7 +1,7 @@
 SQL Query Builder
 =================
 
-[![Build Status](https://travis-ci.org/nilportugues/sql-query-builder.png)](https://travis-ci.org/nilportugues/sql-query-builder) [![SensioLabsInsight](https://insight.sensiolabs.com/projects/89ec1003-4227-43a2-8432-67a9fc2d3ba3/mini.png)](https://insight.sensiolabs.com/projects/89ec1003-4227-43a2-8432-67a9fc2d3ba3) [![Latest Stable Version](https://poser.pugx.org/nilportugues/sql-query-builder/v/stable.svg)](https://packagist.org/packages/nilportugues/sql-query-builder) [![Total Downloads](https://poser.pugx.org/nilportugues/sql-query-builder/downloads.svg)](https://packagist.org/packages/nilportugues/sql-query-builder) [![License](https://poser.pugx.org/nilportugues/sql-query-builder/license.svg)](https://packagist.org/packages/nilportugues/sql-query-builder)
+[![Build Status](https://travis-ci.org/nilportugues/sql-query-builder.png)](https://travis-ci.org/nilportugues/sql-query-builder) [![Coverage Status](https://img.shields.io/coveralls/nilportugues/sql-query-builder.svg)](https://coveralls.io/r/nilportugues/sql-query-builder) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/nilportugues/sql-query-builder/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/nilportugues/sql-query-builder/?branch=master)  [![SensioLabsInsight](https://insight.sensiolabs.com/projects/89ec1003-4227-43a2-8432-67a9fc2d3ba3/mini.png)](https://insight.sensiolabs.com/projects/89ec1003-4227-43a2-8432-67a9fc2d3ba3) [![Latest Stable Version](https://poser.pugx.org/nilportugues/sql-query-builder/v/stable.svg)](https://packagist.org/packages/nilportugues/sql-query-builder) [![Total Downloads](https://poser.pugx.org/nilportugues/sql-query-builder/downloads.svg)](https://packagist.org/packages/nilportugues/sql-query-builder) [![License](https://poser.pugx.org/nilportugues/sql-query-builder/license.svg)](https://packagist.org/packages/nilportugues/sql-query-builder)
 
 An elegant lightweight and efficient SQL Query Builder with fluid interface SQL syntax supporting bindings and complicated query generation.
 <a name="index_block"></a>
@@ -18,6 +18,7 @@ An elegant lightweight and efficient SQL Query Builder with fluid interface SQL 
         * [3.1.3. SELECT with WHERE statement](#block3.1.3)
         * [3.1.4. Complex WHERE conditions](#block3.1.4)
         * [3.1.5. JOIN & LEFT/RIGHT/INNER/CROSS JOIN SELECT statements](#block3.1.5)
+        * [3.1.6. COUNT rows](#block3.1.6)
     * [3.2. INSERT Statement](#block3.2)
            * [3.2.1. Basic INSERT statement](#block3.2.1) 
     * [3.3. UPDATE Statement](#block3.3)
@@ -27,6 +28,10 @@ An elegant lightweight and efficient SQL Query Builder with fluid interface SQL 
         * [3.4.1. Empty table with DELETE statement](#block3.4.1)
         * [3.4.2. Basic DELETE statement](#block3.4.2)
         * [3.4.3. Elaborated DELETE statement](#block3.4.3)     
+    * [3.5. INTERSECT Statement](#block3.5)
+    * [3.6. MINUS Statement](#block3.6)
+    * [3.7. UNION Statement](#block3.7)
+    * [3.8. UNION ALL Statement](#block3.8)
 * [4. Advanced Quering](#block4)    
     * [4.1. Filtering using WHERE](#block4.1)
         * [4.1.1. Changing WHERE logical operator](#block4.2)     
@@ -49,7 +54,7 @@ The recommended way to install SQL Query Builder is through [Composer](http://ge
 ```json
     {
         "require": {
-            "nilportugues/sql-query-builder": "dev-master"
+            "nilportugues/sql-query-builder": "1.0.0"
         }
     }
 ```
@@ -62,6 +67,8 @@ The SQL Query Builder allows to generate complex SQL queries standard using the 
 <a name="block2.1"></a>
 ### 2.1. Generic Builder [↑](#index_block)
 The Generic Query Builder is the default builder for this class and writes standard SQL-2003.
+
+**All column aliases are escaped using the `'` sign by default.**
 
 #### Usage:
 ```php
@@ -82,6 +89,8 @@ SELECT user.* FROM user
 <a name="block2.2"></a>
 ### 2.2. MySQL Builder [↑](#index_block) 
 The MySQL Query Builder has its own class, that inherits from the SQL-2003 builder. All columns will be wrapped with the tilde **`** sign.
+
+**All table and column aliases are escaped using the tilde sign by default.**
 
 #### Usage:
 ```php
@@ -178,7 +187,7 @@ echo $builder->write($query);
 ```
 #### Output:
 ```sql
-SELECT user.user_id AS userId, user.name AS username, user.email AS email FROM user
+SELECT user.user_id AS 'userId', user.name AS 'username', user.email AS 'email' FROM user
 ```
 <a name="block3.1.3"></a>
 #### 3.1.3. SELECT with WHERE statement [↑](#index_block)
@@ -208,9 +217,9 @@ echo $builder->writeFormatted($query);
 #### Output:
 ```sql
 SELECT 
-    user.user_id AS userId,
-    user.name AS username,
-    user.email AS email 
+    user.user_id AS 'userId',
+    user.name AS 'username',
+    user.email AS 'email'
 FROM 
     user 
 WHERE 
@@ -300,11 +309,11 @@ echo $builder->writeFormatted($query);
 #### Output:
 ```sql
 SELECT 
-    user.user_id AS userId,
-    user.name AS username,
-    user.email AS email,
+    user.user_id AS 'userId',
+    user.name AS 'username',
+    user.email AS 'email',
     user.created_at,
-    news.title AS newsTitle,
+    news.title AS 'newsTitle',
     news.body,
     news.created_at,
     news.updated_at 
@@ -323,12 +332,76 @@ ORDER BY
     news.created_at DESC;
 ```
 
+<a name="block3.1.6"></a>
+#### 3.1.6. COUNT rows [↑](#index_block)
+Counting rows comes in 3 possible ways, using the ALL selector `*`, stating a column or stating a column and its alias.
+
+#### 3.1.6.1. Count using ALL selector
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$query = $builder->select()
+        ->setTable('user')
+        ->count()
+
+echo $builder->write($query);
+```
+
+#### Output:
+```sql
+SELECT COUNT(*) FROM user;
+```
+
+#### 3.1.6.2. Count using column as a selector
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$query = $builder->select()
+        ->setTable('user')
+        ->count('user_id')
+
+echo $builder->write($query);
+```
+
+#### Output:
+```sql
+SELECT COUNT(user.user_id) FROM user;
+```
+
+#### 3.1.6.3. Count using column as a selector
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$query = $builder->select()
+        ->setTable('user')
+        ->count('user_id', 'total_users')
+
+echo $builder->write($query);
+```
+
+#### Output:
+```sql
+SELECT COUNT(user.user_id) AS 'total_users' FROM user;
+```
+
 <a name="block3.2"></a>
 ### 3.2. INSERT Statement [↑](#index_block)
 
 The `INSERT` statement is really straightforward.
 
-<a name="block3.3.1"></a>
+<a name="block3.2.1"></a>
 #### 3.2.1 Basic INSERT statement [↑](#index_block)
 
 #### Usage:
@@ -358,7 +431,6 @@ INSERT INTO user (user.user_id, user.name, user.contact) VALUES (:v1, :v2, :v3)
 ```php
 [':v1' => 1, ':v2' => 'Nil', ':v3' => 'contact@nilportugues.com'];
 ```
-
 
 <a name="block3.3"></a>
 ### 3.3. UPDATE Statement [↑](#index_block)
@@ -544,6 +616,153 @@ ORDER BY
 LIMIT :v4
 ```
 
+
+
+<a name="block3.5"></a>
+### 3.5. INTERSECT Statement [↑](#index_block)
+
+***
+   INTERSECT is not supported by MySQL. 
+   Same results can be achieved by using INNER JOIN statement instead.
+***
+
+The `INTERSECT` statement is really straightforward.
+
+<a name="block3.5.1"></a>
+#### 3.5.1 Basic INTERSECT statement [↑](#index_block)
+
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$select1 = $builder->select()->setTable('user');
+$select2 = $builder->select()->setTable('user_emails');
+   
+$query = $builder->intersect()
+    ->add($select1)
+    ->add($select2);
+   
+$sql = $builder->writeFormatted($query);    
+$values = $builder->getValues();
+```
+
+#### Output
+```sql
+SELECT user.* FROM user
+INTERSECT
+SELECT user_email.* FROM user_email
+```
+
+
+<a name="block3.6"></a>
+### 3.6. MINUS Statement [↑](#index_block)
+
+***
+   MINUS is not supported by MySQL. 
+   Same results can be achieved by using a LEFT JOIN statement 
+   in combination with an IS NULL or NOT IN condition instead.
+***
+
+The `MINUS` statement is really straightforward.
+
+<a name="block3.6.1"></a>
+#### 3.6.1 Basic MINUS statement [↑](#index_block)
+
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$select1 = $builder->select()->setTable('user');
+$select2 = $builder->select()->setTable('user_emails');
+   
+$query = $builder->minus($select1, $select2);
+   
+$sql = $builder->writeFormatted($query);    
+$values = $builder->getValues();
+```
+
+#### Output
+```sql
+SELECT user.* FROM user
+MINUS
+SELECT user_email.* FROM user_email
+```
+
+
+<a name="block3.7"></a>
+### 3.7. UNION Statement [↑](#index_block)
+
+The `UNION` statement is really straightforward.
+
+<a name="block3.7.1"></a>
+#### 3.7.1 Basic UNION statement [↑](#index_block)
+
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$select1 = $builder->select()->setTable('user');
+$select2 = $builder->select()->setTable('user_emails');
+   
+$query = $builder->union()
+    ->add($select1)
+    ->add($select2);
+   
+$sql = $builder->writeFormatted($query);    
+$values = $builder->getValues();
+```
+
+#### Output
+```sql
+SELECT user.* FROM user
+UNION
+SELECT user_email.* FROM user_email
+```
+
+<a name="block3.8"></a>
+### 3.8. UNION ALL Statement [↑](#index_block)
+
+The `UNION ALL` statement is really straightforward.
+
+<a name="block3.8.1"></a>
+#### 3.8.1 Basic UNION ALL statement [↑](#index_block)
+
+#### Usage:
+```php
+<?php
+use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
+
+$builder = new GenericBuilder(); 
+
+$select1 = $builder->select()->setTable('user');
+$select2 = $builder->select()->setTable('user_emails');
+   
+$query = $builder->unionAll()
+    ->add($select1)
+    ->add($select2);
+   
+$sql = $builder->writeFormatted($query);    
+$values = $builder->getValues();
+```
+
+#### Output
+```sql
+SELECT user.* FROM user
+UNION ALL
+SELECT user_email.* FROM user_email
+```
+
+
+
 <a name="block4"></a>
 ## 4. Advanced Quering [↑](#index_block)
 
@@ -570,7 +789,9 @@ The following operators are available for filtering using WHERE conditionals:
     public function between($column, $a, $b);
     public function isNull($column);
     public function isNotNull($column);
-    public function addBitClause($column, $value);
+    public function exists(Select $select);
+    public function notExists(Select $select);
+    public function addBitClause($column, $value);    
 ```
 
 <a name="block4.2"></a>
@@ -630,9 +851,9 @@ $values = $builder->getValues();
 #### Output:
 ```sql
 SELECT 
-    user.user_id AS userId,
-    user.name AS username,
-    user.email AS email,
+    user.user_id AS 'userId',
+    user.name AS 'username',
+    user.email AS 'email',
     user.created_at 
 FROM 
     user 
@@ -678,9 +899,9 @@ $values = $builder->getValues();
 #### Output:
 ```sql
 SELECT 
-    user.user_id AS userId,
-    user.name AS username,
-    user.email AS email,
+    user.user_id AS 'userId',
+    user.name AS 'username',
+    user.email AS 'email',
     user.created_at 
 FROM 
     user 
@@ -734,7 +955,7 @@ SELECT
         WHERE 
             (role.role_id = :v1) 
         LIMIT :v2, :v3
-    ) AS user_role, 
+    ) AS 'user_role', 
     (
         SELECT 
             role.role_name  
@@ -743,7 +964,7 @@ SELECT
         WHERE 
             (role.role_id = :v4) 
         LIMIT :v5, :v6
-    ) AS role 
+    ) AS 'role' 
 FROM 
     user 
 WHERE 
@@ -777,7 +998,7 @@ $values = $builder->getValues();
 SELECT 
     user.user_id,
     user.username,
-    :v1 AS priority 
+    :v1 AS 'priority' 
 FROM 
     user 
 WHERE
@@ -812,7 +1033,7 @@ $values = $builder->getValues();
 SELECT 
     user.user_id,
     user.username,
-    MAX(user_id) AS max_id 
+    MAX(user_id) AS 'max_id'
 FROM 
     user
 WHERE
@@ -844,7 +1065,7 @@ $values = $builder->getValues();
 SELECT 
     user.user_id,
     user.username,
-    CURRENT_TIMESTAMP AS server_time 
+    CURRENT_TIMESTAMP AS 'server_time' 
 FROM 
     user 
 WHERE
@@ -861,7 +1082,7 @@ To run the test suite, you need [Composer](http://getcomposer.org):
 
 ```bash
     php composer.phar install --dev
-    vendor/bin/phpunit
+    php bin/phpunit
 ```
 
 

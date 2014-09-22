@@ -11,6 +11,7 @@
 namespace Tests\NilPortugues\SqlQueryBuilder\Manipulation;
 
 use NilPortugues\SqlQueryBuilder\Manipulation\QueryFactory;
+use NilPortugues\SqlQueryBuilder\Manipulation\Select;
 
 /**
  * Class QueryFactoryTest
@@ -57,9 +58,36 @@ class QueryFactoryTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function it_should_create_minus_object()
+    {
+        $className = '\NilPortugues\SqlQueryBuilder\Manipulation\Minus';
+        $this->assertInstanceOf($className, QueryFactory::createMinus(new Select('table1'), new Select('table2')));
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_create_union_object()
+    {
+        $className = '\NilPortugues\SqlQueryBuilder\Manipulation\Union';
+        $this->assertInstanceOf($className, QueryFactory::createUnion());
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_create_union_all_object()
+    {
+        $className = '\NilPortugues\SqlQueryBuilder\Manipulation\UnionAll';
+        $this->assertInstanceOf($className, QueryFactory::createUnionAll());
+    }
+
+    /**
+     * @test
+     */
     public function it_should_create_where_object()
     {
-        $mockClass = '\NilPortugues\SqlQueryBuilder\Manipulation\Query';
+        $mockClass = '\NilPortugues\SqlQueryBuilder\Manipulation\QueryInterface';
 
         $query = $this->getMockBuilder($mockClass)
             ->disableOriginalConstructor()

@@ -9,11 +9,13 @@
  */
 namespace NilPortugues\SqlQueryBuilder\Manipulation;
 
+use NilPortugues\SqlQueryBuilder\Syntax\QueryPartInterface;
+
 /**
- * Interface Query
+ * Interface QueryInterface
  * @package NilPortugues\SqlQueryBuilder\Manipulation
  */
-interface Query
+interface QueryInterface extends QueryPartInterface
 {
     /**
      * @return \NilPortugues\SqlQueryBuilder\Syntax\Table

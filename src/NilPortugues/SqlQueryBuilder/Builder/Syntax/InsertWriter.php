@@ -16,7 +16,7 @@ use NilPortugues\SqlQueryBuilder\Manipulation\QueryException;
 
 /**
  * Class InsertWriter
- * @package NilPortugues\SqlQueryBuilder\Builder\Syntax
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface\Syntax
  */
 class InsertWriter
 {
@@ -24,6 +24,11 @@ class InsertWriter
      * @var GenericBuilder
      */
     private $writer;
+
+    /**
+     * @var ColumnWriter
+     */
+    private $columnWriter;
 
     /**
      * @param GenericBuilder    $writer

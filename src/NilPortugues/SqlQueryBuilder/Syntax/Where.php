@@ -9,7 +9,7 @@
  */
 namespace NilPortugues\SqlQueryBuilder\Syntax;
 
-use NilPortugues\SqlQueryBuilder\Manipulation\Query;
+use NilPortugues\SqlQueryBuilder\Manipulation\QueryInterface;
 use NilPortugues\SqlQueryBuilder\Manipulation\QueryException;
 use NilPortugues\SqlQueryBuilder\Manipulation\QueryFactory;
 use NilPortugues\SqlQueryBuilder\Manipulation\Select;
@@ -30,11 +30,8 @@ class Where
     const OPERATOR_NOT_EQUAL             = '<>';
     const CONJUNCTION_AND                = 'AND';
     const CONJUNCTION_OR                 = 'OR';
-
-    /**
-     * @var Table
-     */
-    private $table;
+    const CONJUNCTION_EXISTS             = 'EXISTS';
+    const CONJUNCTION_NOT_EXISTS         = 'NOT EXISTS';
 
     /**
      * @var array
@@ -87,14 +84,29 @@ class Where
     private $conjunction = self::CONJUNCTION_AND;
 
     /**
-     * @var  Query
+     * @var  QueryInterface
      */
     private $query;
 
     /**
-     * @param Query $query
+     * @var Table
      */
-    public function __construct(Query $query)
+    private $table;
+
+    /**
+     * @var array
+     */
+    private $exists = array();
+
+    /**
+     * @var array
+     */
+    private $notExists = array();
+
+    /**
+     * @param QueryInterface $query
+     */
+    public function __construct(QueryInterface $query)
     {
         $this->query = $query;
     }
@@ -114,14 +126,15 @@ class Where
     public function isEmpty()
     {
         return (
-            !isset($this->comparisons)
-            && !isset($this->booleans)
-            && !isset($this->betweens)
-            && !isset($this->isNotNull)
-            && !isset($this->isNull)
-            && !isset($this->ins)
-            && !isset($this->notIns)
-            && !isset($this->subWheres)
+            (0 == count($this->comparisons))
+            && (0 == count($this->booleans))
+            && (0 == count($this->betweens))
+            && (0 == count($this->isNotNull))
+            && (0 == count($this->isNull))
+            && (0 == count($this->ins))
+            && (0 == count($this->notIns))
+            && (0 == count($this->subWheres))
+            && (0 == count($this->exists))
         );
     }
 
@@ -148,6 +161,7 @@ class Where
      */
     public function subWhere($operator = 'OR')
     {
+        /** @var Where $filter */
         $filter = QueryFactory::createWhere($this->query);
 
         $filter->conjunction($operator);
@@ -159,6 +173,24 @@ class Where
     }
 
     /**
+     * @param string $operator
+     *
+     * @return $this
+     * @throws QueryException
+     */
+    public function conjunction($operator)
+    {
+        if (!in_array($operator, array(self::CONJUNCTION_AND, self::CONJUNCTION_OR))) {
+            throw new QueryException(
+                "Invalid conjunction specified, must be one of AND or OR, but '".$operator."' was found."
+            );
+        }
+        $this->conjunction = $operator;
+
+        return $this;
+    }
+
+    /**
      * @return Table
      */
     public function getTable()
@@ -167,6 +199,8 @@ class Where
     }
 
     /**
+     * Used for subWhere query building
+     *
      * @param Table $table string
      *
      * @return $this
@@ -235,7 +269,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -246,7 +280,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -257,7 +291,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -268,7 +302,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -279,7 +313,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -301,7 +335,7 @@ class Where
     }
 
     /**
-     * @param string $column
+     * @param string  $column
      * @param integer $value
      *
      * @return static
@@ -312,7 +346,7 @@ class Where
     }
 
     /**
-     * @param       $column
+     * @param           $column
      * @param integer[] $values
      *
      * @return static
@@ -322,34 +356,32 @@ class Where
         $this->match[] = array(
             'columns' => $columns,
             'values'  => $values,
-            'mode'    => 'natural'
+            'mode'    => 'natural',
         );
 
         return $this;
     }
 
     /**
-     * @param       $column
-     * @param integer[] $values
-     *
-     * @return static
+     * @param  string[] $columns
+     * @param  integer[] $values
+     * @return $this
      */
     public function matchBoolean(array $columns, array $values)
     {
         $this->match[] = array(
             'columns' => $columns,
             'values'  => $values,
-            'mode'    => 'boolean'
+            'mode'    => 'boolean',
         );
 
         return $this;
     }
 
     /**
-     * @param       $column
-     * @param integer[] $values
-     *
-     * @return static
+     * @param  string[] $columns
+     * @param  integer[] $values
+     * @return $this
      */
     public function matchWithQueryExpansion(array $columns, array $values)
     {
@@ -363,10 +395,9 @@ class Where
     }
 
     /**
-     * @param       string $column
-     * @param integer[] $values
-     *
-     * @return static
+     * @param string $column
+     * @param  integer[] $values
+     * @return $this
      */
     public function in($column, array $values)
     {
@@ -376,10 +407,9 @@ class Where
     }
 
     /**
-     * @param       string $column
-     * @param integer[] $values
-     *
-     * @return static
+     * @param string $column
+     * @param  integer[] $values
+     * @return $this
      */
     public function notIn($column, array $values)
     {
@@ -392,8 +422,7 @@ class Where
      * @param string $column
      * @param integer $a
      * @param integer $b
-     *
-     * @return static
+     * @return $this
      */
     public function between($column, $a, $b)
     {
@@ -418,8 +447,7 @@ class Where
 
     /**
      * @param string $column
-     *
-     * @return static
+     * @return $this
      */
     public function isNotNull($column)
     {
@@ -432,13 +460,36 @@ class Where
     /**
      * @param string $column
      * @param integer $value
-     *
-     * @return static
+     * @return $this
      */
     public function addBitClause($column, $value)
     {
         $column           = $this->prepareColumn($column);
         $this->booleans[] = array("subject" => $column, "value" => ($value));
+
+        return $this;
+    }
+
+    /**
+     * @param Select $select
+     *
+     * @return $this
+     */
+    public function exists(Select $select)
+    {
+        $this->exists[] = $select;
+
+       return $this;
+    }
+
+    /**
+     * @param Select $select
+     *
+     * @return $this
+     */
+    public function notExists(Select $select)
+    {
+        $this->notExists[] = $select;
 
         return $this;
     }
@@ -465,24 +516,6 @@ class Where
     public function getNotIns()
     {
         return $this->notIns;
-    }
-
-    /**
-     * @param string $operator
-     *
-     * @return $this
-     * @throws QueryException
-     */
-    public function conjunction($operator)
-    {
-        if (!in_array($operator, array(self::CONJUNCTION_AND, self::CONJUNCTION_OR))) {
-            throw new QueryException(
-                "Invalid conjunction specified, must be one of AND or OR, but '" . $operator . "' was found."
-            );
-        }
-        $this->conjunction = $operator;
-
-        return $this;
     }
 
     /**
@@ -523,5 +556,21 @@ class Where
     public function getNull()
     {
         return $this->isNull;
+    }
+
+    /**
+     * @return array
+     */
+    public function getExists()
+    {
+        return $this->exists;
+    }
+
+    /**
+     * @return array
+     */
+    public function getNotExists()
+    {
+        return $this->notExists;
     }
 }

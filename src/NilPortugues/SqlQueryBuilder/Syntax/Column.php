@@ -15,7 +15,7 @@ use NilPortugues\SqlQueryBuilder\Manipulation\QueryException;
  * Class Column
  * @package NilPortugues\SqlQueryBuilder\Syntax
  */
-class Column implements QueryPart
+class Column implements QueryPartInterface
 {
     const ALL = '*';
 
@@ -35,11 +35,11 @@ class Column implements QueryPart
     protected $alias;
 
     /**
-     * @param      $name
-     * @param      null|string $table
-     * @param null|string $alias
+     * @param string $name
+     * @param string $table
+     * @param string $alias
      */
-    public function __construct($name, $table, $alias = null)
+    public function __construct($name, $table, $alias = '')
     {
         $this->setName($name);
         $this->setTable($table);
@@ -111,7 +111,7 @@ class Column implements QueryPart
      */
     public function setAlias($alias)
     {
-        if (is_null($alias)) {
+        if (0 == strlen($alias)) {
             $this->alias = null;
 
             return $this;

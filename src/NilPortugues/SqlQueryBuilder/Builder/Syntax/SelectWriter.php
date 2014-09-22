@@ -18,7 +18,7 @@ use NilPortugues\SqlQueryBuilder\Syntax\SyntaxFactory;
 
 /**
  * Class SelectWriter
- * @package NilPortugues\SqlQueryBuilder\Builder\Syntax
+ * @package NilPortugues\SqlQueryBuilder\BuilderInterface\Syntax
  */
 class SelectWriter
 {
@@ -60,10 +60,9 @@ class SelectWriter
         $selectAsColumn = $this->writeSelect($select);
 
         if (!empty($selectAsColumn)) {
-            $selectAsColumn = '(' . $selectAsColumn . ')';
+            $selectAsColumn = '('.$selectAsColumn.')';
         }
 
-        $alias  = $this->writer->writeAlias($alias);
         $column = array($alias => $selectAsColumn);
 
         return SyntaxFactory::createColumn($column, null);
@@ -143,7 +142,7 @@ class SelectWriter
      */
     public function writeSelectFrom(Select $select)
     {
-        return "FROM " . $this->writer->writeTableWithAlias($select->getTable());
+        return "FROM ".$this->writer->writeTableWithAlias($select->getTable());
     }
 
     /**
@@ -187,7 +186,7 @@ class SelectWriter
         if (count($wheres) > 0) {
 
             $str       = "WHERE ";
-            $separator = " " . $this->writer->writeConjunction($select->getWhereOperator()) . " ";
+            $separator = " ".$this->writer->writeConjunction($select->getWhereOperator())." ";
 
             $str .= implode($separator, $wheres);
         }
@@ -267,7 +266,7 @@ class SelectWriter
             );
 
             $str       = "HAVING ";
-            $separator = " " . $select->getHavingOperator() . " ";
+            $separator = " ".$select->getHavingOperator()." ";
 
             $str .= implode($separator, $havingArray);
         }
@@ -315,7 +314,7 @@ class SelectWriter
     {
         $column = $this->columnWriter->writeColumn($orderBy->getColumn());
 
-        return $column . ' ' . $orderBy->getDirection();
+        return $column.' '.$orderBy->getDirection();
     }
 
     /**

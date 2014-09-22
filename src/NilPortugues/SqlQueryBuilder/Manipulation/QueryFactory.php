@@ -59,12 +59,47 @@ final class QueryFactory
     }
 
     /**
-     * @param Query $query
+     * @param QueryInterface $query
      *
      * @return Where
      */
-    public static function createWhere(Query $query)
+    public static function createWhere(QueryInterface $query)
     {
         return new Where($query);
+    }
+
+    /**
+     * @return Intersect
+     */
+    public static function createIntersect()
+    {
+        return new Intersect();
+    }
+
+    /**
+     * @param Select $first
+     * @param Select $second
+     *
+     * @return Minus
+     */
+    public static function createMinus(Select $first, Select $second)
+    {
+        return new Minus($first, $second);
+    }
+
+    /**
+     * @return Union
+     */
+    public static function createUnion()
+    {
+        return new Union();
+    }
+
+    /**
+     * @return UnionAll
+     */
+    public static function createUnionAll()
+    {
+        return new UnionAll();
     }
 }

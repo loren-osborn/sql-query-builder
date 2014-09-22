@@ -10,7 +10,7 @@
 namespace NilPortugues\SqlQueryBuilder\Manipulation;
 
 use NilPortugues\SqlQueryBuilder\Syntax\OrderBy;
-use NilPortugues\SqlQueryBuilder\Syntax\QueryPart;
+use NilPortugues\SqlQueryBuilder\Syntax\QueryPartInterface;
 use NilPortugues\SqlQueryBuilder\Syntax\SyntaxFactory;
 use NilPortugues\SqlQueryBuilder\Syntax\Table;
 use NilPortugues\SqlQueryBuilder\Syntax\Where;
@@ -19,10 +19,10 @@ use NilPortugues\SqlQueryBuilder\Syntax\Where;
  * Class BaseQuery
  * @package NilPortugues\SqlQueryBuilder
  */
-abstract class BaseQuery implements Query, QueryPart
+abstract class BaseQuery implements QueryInterface
 {
     /**
-     * @var Table
+     * @var string
      */
     protected $table;
 
@@ -99,7 +99,7 @@ abstract class BaseQuery implements Query, QueryPart
      */
     public function setTable($table)
     {
-        $this->table = $table;
+        $this->table = (string) $table;
 
         return $this;
     }
@@ -133,7 +133,7 @@ abstract class BaseQuery implements Query, QueryPart
     }
 
     /**
-     * @param        string $column
+     * @param string $column
      * @param string $direction
      * @param null   $table
      *

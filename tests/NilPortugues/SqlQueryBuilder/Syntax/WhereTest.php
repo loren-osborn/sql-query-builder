@@ -10,6 +10,7 @@
 
 namespace Tests\NilPortugues\SqlQueryBuilder\Syntax;
 
+use NilPortugues\SqlQueryBuilder\Manipulation\Select;
 use NilPortugues\SqlQueryBuilder\Syntax\Where;
 use Tests\NilPortugues\SqlQueryBuilder\Manipulation\Resources\DummyQuery;
 
@@ -63,7 +64,7 @@ class WhereTest extends \PHPUnit_Framework_TestCase
      */
     public function it_should_be_empty_on_construct()
     {
-        $this->assertEmpty($this->where->isEmpty());
+        $this->assertTrue($this->where->isEmpty());
     }
 
     /**
@@ -227,8 +228,8 @@ class WhereTest extends \PHPUnit_Framework_TestCase
             0 => array(
                 'columns' => array('user_id'),
                 'values'  => array(1, 2, 3),
-                'mode'    => 'natural'
-            )
+                'mode'    => 'natural',
+            ),
         );
         $this->assertEquals($expected, $result);
     }
@@ -248,8 +249,8 @@ class WhereTest extends \PHPUnit_Framework_TestCase
             0 => array(
                 'columns' => array('user_id'),
                 'values'  => array(1, 2, 3),
-                'mode'    => 'boolean'
-            )
+                'mode'    => 'boolean',
+            ),
         );
         $this->assertEquals($expected, $result);
     }
@@ -269,8 +270,8 @@ class WhereTest extends \PHPUnit_Framework_TestCase
             0 => array(
                 'columns' => array('user_id'),
                 'values'  => array(1, 2, 3),
-                'mode'    => 'query_expansion'
-            )
+                'mode'    => 'query_expansion',
+            ),
         );
         $this->assertEquals($expected, $result);
     }
@@ -380,5 +381,31 @@ class WhereTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException($this->queryException);
         $this->where->conjunction('NOT_VALID_CONJUNCTION');
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_set_exists_condition()
+    {
+        $select1 = new Select('user');
+        $select1->where()->equals('user_id', 10);
+
+        $result = $this->where->exists($select1)->getExists();
+
+        $this->assertEquals(array($select1), $result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_set_not_exists_condition()
+    {
+        $select1 = new Select('user');
+        $select1->where()->equals('user_id', 10);
+
+        $result = $this->where->notExists($select1)->getNotExists();
+
+        $this->assertEquals(array($select1), $result);
     }
 }

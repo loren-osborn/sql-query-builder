@@ -1,23 +1,23 @@
 <?php
 /**
  * Author: Nil Portugués Calderó <contact@nilportugues.com>
- * Date: 6/3/14
- * Time: 1:37 AM
+ * Date: 9/12/14
+ * Time: 10:45 PM
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-namespace Tests\NilPortugues\SqlQueryBuilder\Manipulation;
+namespace Tests\NilPortugues\SqlQueryBuilder\Builder\Syntax;
 
 use NilPortugues\SqlQueryBuilder\Builder\GenericBuilder;
 use NilPortugues\SqlQueryBuilder\Manipulation\Delete;
 
 /**
- * Class DeleteTest
- * @package Tests\NilPortugues\SqlQueryBuilder\Manipulation
+ * Class DeleteWriterTest
+ * @package Tests\NilPortugues\SqlQueryBuilder\Builder\Syntax
  */
-class DeleteTest extends \PHPUnit_Framework_TestCase
+class DeleteWriterTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var GenericBuilder
